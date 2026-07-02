@@ -4,9 +4,31 @@
   "description": "A stylized launcher for The Outer Rim",
   "main": "Application Core.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dist": "electron-builder --win nsis"
   },
-  "dependencies": {
-    "electron": "^31.0.0"
+  "build": {
+    "appId": "gg.outerrim.launcher",
+    "productName": "Outer Rim Launcher",
+    "files": [
+      "**/*",
+      "!user-data/**",
+      "!dist/**",
+      "!launcher.cache",
+      "!*.log"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "OuterRimLauncherSetup-${version}.exe"
+    }
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^26.15.3"
   }
 }

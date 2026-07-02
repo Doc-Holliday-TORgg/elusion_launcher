@@ -1,20 +1,17 @@
 {
-  "downloadUrl": "https://speed.hetzner.de/50MB.bin",
-  "downloadFileName": "mtg_patch_014.tre",
+  "webHost": "outerrim.gg",
+  "gameHost": "play.outerrim.gg",
+  "loginPort": 44453,
+  "bypassUpdate": true,
   "patchNotesUrl": "https://outerrim.gg/portal/patch-notes",
   "roadmapUrl": "https://outerrim.gg/portal/roadmap",
-  "eventsUrl": "https://outerrim.gg/portal/scheduled-events",
+  "eventsUrl": "https://outerrim.gg/portal/api/events",
+  "authUrl": "https://outerrim.gg/portal/api/login",
   "portalStatusUrl": "https://outerrim.gg/portal/",
   "servers": [
     {
       "name": "Live - The Outer Rim",
-      "address": "login.theouterrim.gg",
-      "statusUrl": "https://login.theouterrim.gg"
-    },
-    {
-      "name": "Public Test",
-      "address": "publictest.outerrim.gg",
-      "statusUrl": "https://publictest.outerrim.gg"
+      "address": "play.outerrim.gg"
     }
   ]
 }

@@ -27,13 +27,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const selectSwgFolderBtn = document.getElementById('selectSwgFolderBtn');
     const launchActionBtn = document.getElementById('launchActionBtn');
 
-    let downloadFileName = 'mtg_patch_014.tre';
-    let downloadUrl = 'https://speed.hetzner.de/50MB.bin';
-    let downloadComplete = false;
+    let isUpdating = false;
+    let updateReady = false;
     let isLoggedIn = false;
-    let isGameInstalled = false;
     let swgInstallPath = '';
     let servers = [];
+    let bypassUpdate = false;
 
     function updateLoginUI() {
         loginStatus.textContent = isLoggedIn ? 'Logged in' : 'Not logged in';
@@ -69,7 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (result?.success) {
             isLoggedIn = true;
             updateLoginUI();
-            updateDownloadUI();
+            updateUI(undefined, 'Logged in. Check for updates to patch your client.');
             closeLoginModal();
             return;
         }
@@ -77,132 +76,123 @@ document.addEventListener('DOMContentLoaded', async () => {
         loginError.textContent = result?.error || 'Login failed. Please try again.';
     }
 
-    function updateDownloadUI(percent = 0, status = 'Ready to start download') {
-        progressBar.style.width = `${percent}%`;
-        downloadContent.textContent = `Downloading: ${downloadFileName}`;
-        downloadStatus.textContent = status;
+    // Single source of truth for the footer state: progress bar, status line,
+    // SWG-path hint, and the enable/label of the update + launch buttons.
+    function updateUI(percent, status) {
+        if (typeof percent === 'number') progressBar.style.width = `${percent}%`;
+        if (status != null) downloadStatus.textContent = status;
+        swgPathInfo.textContent = swgInstallPath ? `SWG folder: ${swgInstallPath}` : 'SWG folder not selected.';
 
-        if (swgInstallPath) {
-            swgPathInfo.textContent = `SWG folder: ${swgInstallPath}`;
-        } else {
-            swgPathInfo.textContent = 'SWG folder not selected.';
+        if (bypassUpdate) {
+            downloadActionBtn.textContent = 'UPDATES DISABLED';
+            downloadActionBtn.disabled = true;
+            launchActionBtn.disabled = !(swgInstallPath && isLoggedIn);
+            return;
         }
 
-        if (!isGameInstalled) {
-            downloadActionBtn.textContent = 'START DOWNLOAD';
+        if (isUpdating) {
+            downloadActionBtn.textContent = 'UPDATING…';
             downloadActionBtn.disabled = true;
             launchActionBtn.disabled = true;
             return;
         }
-
+        if (!swgInstallPath) {
+            downloadActionBtn.textContent = 'SELECT SWG FOLDER';
+            downloadActionBtn.disabled = true;
+            launchActionBtn.disabled = true;
+            return;
+        }
         if (!isLoggedIn) {
             downloadActionBtn.textContent = 'LOGIN REQUIRED';
             downloadActionBtn.disabled = true;
             launchActionBtn.disabled = true;
             return;
         }
-
-        if (downloadComplete) {
-            downloadActionBtn.textContent = 'DOWNLOAD COMPLETE';
-            downloadActionBtn.disabled = true;
-            launchActionBtn.disabled = false;
-        } else {
-            downloadActionBtn.textContent = 'START DOWNLOAD';
-            downloadActionBtn.disabled = false;
-            launchActionBtn.disabled = true;
-        }
+        downloadActionBtn.textContent = 'CHECK FOR UPDATES';
+        downloadActionBtn.disabled = false;
+        launchActionBtn.disabled = !updateReady;
     }
 
-    function startDownload() {
-        if (downloadComplete || window.electronAPI?.startDownload == null) {
+    async function runUpdate() {
+        if (bypassUpdate) {
+            updateReady = true;
+            updateUI(100, 'Updates are disabled — launch uses your existing client files.');
             return;
         }
-
-        if (!isGameInstalled) {
-            updateDownloadUI(0, 'Please select your SWG folder before downloading.');
+        if (isUpdating) return;
+        if (!swgInstallPath) {
+            updateUI(0, 'Select your SWG folder before updating.');
             return;
         }
-
         if (!isLoggedIn) {
-            updateDownloadUI(0, 'Please log in before downloading.');
+            updateUI(0, 'Please log in before updating.');
             return;
         }
 
-        downloadActionBtn.textContent = 'DOWNLOADING...';
-        downloadActionBtn.disabled = true;
-        launchActionBtn.disabled = true;
-        updateDownloadUI(0, 'Initializing download...');
-        window.electronAPI.startDownload(downloadUrl, downloadFileName);
+        isUpdating = true;
+        updateUI(0, 'Starting update…');
+
+        const result = await window.electronAPI?.runUpdate?.();
+        isUpdating = false;
+
+        if (result?.success) {
+            updateReady = true;
+            updateUI(100, result.message || 'Up to date. Ready to launch.');
+        } else {
+            updateReady = false;
+            updateUI(0, `Update failed: ${result?.error || 'unknown error'}`);
+        }
     }
 
     downloadActionBtn.addEventListener('click', () => {
-        if (downloadComplete) {
-            return;
-        }
-        startDownload();
+        runUpdate();
     });
 
-    launchActionBtn.addEventListener('click', () => {
-        if (!downloadComplete) {
-            return;
-        }
+    launchActionBtn.addEventListener('click', async () => {
+        if (!updateReady) return;
         const selectedAddress = serverDropdown?.value;
-        launchActionBtn.textContent = 'LAUNCHING...';
+        launchActionBtn.textContent = 'LAUNCHING…';
         launchActionBtn.disabled = true;
-        window.electronAPI?.launchGame?.(selectedAddress);
-    });
 
-    loginBtn?.addEventListener('click', () => {
-        openLoginModal();
-    });
+        const result = await window.electronAPI?.launchGame?.(selectedAddress);
+        launchActionBtn.textContent = 'LAUNCH GAME';
 
-    loginSubmitBtn?.addEventListener('click', () => {
-        submitLogin();
-    });
-
-    loginCancelBtn?.addEventListener('click', () => {
-        closeLoginModal();
-    });
-
-    loginModal?.addEventListener('click', (event) => {
-        if (event.target === loginModal) {
-            closeLoginModal();
+        if (result?.success) {
+            updateUI(100, 'Game launched. Have fun!');
+            launchActionBtn.disabled = false;
+        } else {
+            updateUI(100, `Launch failed: ${result?.error || 'unknown error'}`);
+            launchActionBtn.disabled = false;
         }
     });
 
-    selectSwgFolderBtn?.addEventListener('click', () => {
-        selectSwgFolder();
+    loginBtn?.addEventListener('click', () => openLoginModal());
+    loginSubmitBtn?.addEventListener('click', () => submitLogin());
+    loginCancelBtn?.addEventListener('click', () => closeLoginModal());
+    loginModal?.addEventListener('click', (event) => {
+        if (event.target === loginModal) closeLoginModal();
     });
 
-    window.electronAPI?.onDownloadProgress?.((event, data) => {
-        updateDownloadUI(data.percent, `Downloading ${data.fileName} — ${data.percent}% (${(data.received / 1024 / 1024).toFixed(1)} / ${(data.total / 1024 / 1024).toFixed(1)} MB)`);
-    });
+    selectSwgFolderBtn?.addEventListener('click', () => selectSwgFolder());
 
-    window.electronAPI?.onDownloadComplete?.((event, data) => {
-        downloadComplete = true;
-        updateDownloadUI(100, `Download complete: ${data.fileName}`);
-        launchActionBtn.textContent = 'LAUNCH GAME';
+    window.electronAPI?.onUpdateProgress?.((event, data) => {
+        updateUI(typeof data?.percent === 'number' ? data.percent : undefined, data?.message || '');
     });
 
     async function loadLauncherConfig() {
-        if (!window.electronAPI?.getLauncherConfig) {
-            return;
-        }
+        if (!window.electronAPI?.getLauncherConfig) return;
 
         const config = await window.electronAPI.getLauncherConfig();
-        downloadFileName = config.downloadFileName || downloadFileName;
-        downloadUrl = config.downloadUrl || downloadUrl;
         swgInstallPath = config.swgInstallPath || '';
         servers = config.servers || [];
-        document.getElementById('downloadContent').textContent = `Downloading: ${downloadFileName}`;
+        bypassUpdate = !!config.bypassUpdate;
+        downloadContent.textContent = bypassUpdate ? 'Outer Rim — launcher (updates disabled)' : 'Outer Rim — client updater';
         await refreshServerStatus();
         await loadGameInstallState();
     }
 
     async function refreshServerStatus() {
-        if (!serverDropdown || !servers.length || !window.electronAPI?.checkServerStatus) {
-            return;
-        }
+        if (!serverDropdown || !servers.length || !window.electronAPI?.checkServerStatus) return;
 
         serverDropdown.innerHTML = '';
         for (const server of servers) {
@@ -214,98 +204,65 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         for (let i = 0; i < servers.length; i++) {
             const server = servers[i];
-            const status = await window.electronAPI.checkServerStatus(server.statusUrl);
+            const status = await window.electronAPI.checkServerStatus(server.address);
             const option = serverDropdown.options[i];
             const online = status?.online;
             option.textContent = `${server.name} (${online ? 'Online' : 'Offline'})`;
-            option.disabled = !online;
         }
     }
 
     async function loadPatchNotes() {
-        if (!window.electronAPI?.fetchPatchNotes) {
-            return;
-        }
+        if (!window.electronAPI?.fetchPatchNotes) return;
 
         const patchNotesText = document.getElementById('patchNotesText');
         patchNotesText.textContent = 'Refreshing patch notes...';
         const result = await window.electronAPI.fetchPatchNotes();
-        if (result.success) {
-            patchNotesText.textContent = result.notes;
-        } else {
-            patchNotesText.textContent = `Unable to load patch notes: ${result.error}`;
-        }
+        patchNotesText.textContent = result.success ? result.notes : `Unable to load patch notes: ${result.error}`;
     }
 
     async function loadGameInstallState() {
-        if (!window.electronAPI?.checkGameInstalled) {
-            return;
-        }
+        if (!window.electronAPI?.checkGameInstalled) return;
 
         const result = await window.electronAPI.checkGameInstalled();
-        isGameInstalled = result?.installed === true;
-        if (result?.path) {
-            swgInstallPath = result.path;
-        }
+        if (result?.path) swgInstallPath = result.path;
 
-        if (!isGameInstalled) {
-            updateDownloadUI(0, 'Star Wars Galaxies not found on this PC.');
-        } else {
-            updateDownloadUI();
-        }
+        updateUI(0, swgInstallPath ? 'Ready. Log in, then check for updates.' : 'Select your Star Wars Galaxies folder to begin.');
     }
 
     async function selectSwgFolder() {
-        if (!window.electronAPI?.selectGameFolder) {
-            return;
-        }
+        if (!window.electronAPI?.selectGameFolder) return;
 
         const result = await window.electronAPI.selectGameFolder();
-        if (result?.canceled) {
-            return;
-        }
+        if (result?.canceled) return;
 
-        isGameInstalled = result?.installed === true;
         swgInstallPath = result?.path || swgInstallPath;
-        if (result?.installed) {
-            updateDownloadUI();
-        } else {
-            updateDownloadUI(0, 'Selected folder does not contain SWG client.');
-        }
+        updateReady = false;
+        // Any chosen folder is patchable — the client can be downloaded into it.
+        updateUI(0, result?.installed
+            ? 'SWG folder set. Log in, then check for updates.'
+            : 'Folder set — client will be patched here. Log in, then check for updates.');
     }
 
     async function loadEvents() {
-        if (!eventsContent || !window.electronAPI?.fetchEvents) {
-            return;
-        }
+        if (!eventsContent || !window.electronAPI?.fetchEvents) return;
 
         eventsContent.innerHTML = 'Loading events...';
         const result = await window.electronAPI.fetchEvents();
-        if (result.success) {
-            eventsContent.innerHTML = result.html;
-        } else {
-            eventsContent.textContent = `Unable to load events: ${result.error}`;
-        }
+        if (result.success) eventsContent.innerHTML = result.html;
+        else eventsContent.textContent = `Unable to load events: ${result.error}`;
     }
 
     async function loadRoadmap() {
-        if (!roadmapContent || !window.electronAPI?.fetchRoadmap) {
-            return;
-        }
+        if (!roadmapContent || !window.electronAPI?.fetchRoadmap) return;
 
         roadmapContent.innerHTML = 'Loading roadmap...';
         const result = await window.electronAPI.fetchRoadmap();
-        if (result.success) {
-            roadmapContent.innerHTML = result.html;
-        } else {
-            roadmapContent.textContent = `Unable to load roadmap: ${result.error}`;
-        }
+        if (result.success) roadmapContent.innerHTML = result.html;
+        else roadmapContent.textContent = `Unable to load roadmap: ${result.error}`;
     }
 
     async function loadPortalStatus() {
-        if (!serverStatusContent || !window.electronAPI?.fetchPortalStatus) {
-            return;
-        }
+        if (!serverStatusContent || !window.electronAPI?.fetchPortalStatus) return;
 
         serverStatusContent.innerHTML = 'Checking portal status...';
         const result = await window.electronAPI.fetchPortalStatus();
@@ -329,32 +286,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     setInterval(refreshServerStatus, 60000);
 
     updateLoginUI();
-    updateDownloadUI();
+    updateUI(0);
 
-    optionsBtn.addEventListener('click', () => {
-        optionsModal.classList.remove('hidden');
-    });
-
+    optionsBtn.addEventListener('click', () => optionsModal.classList.remove('hidden'));
     optionsModal.addEventListener('click', (event) => {
-        if (event.target === optionsModal) {
-            optionsModal.classList.add('hidden');
-        }
+        if (event.target === optionsModal) optionsModal.classList.add('hidden');
     });
-
     saveOptions.addEventListener('click', () => {
         fpsValue.textContent = `${frameRate.value} FPS`;
         optionsModal.classList.add('hidden');
     });
-
     frameRate.addEventListener('input', () => {
         fpsValue.textContent = `${frameRate.value} FPS`;
     });
 
-    minimizeWindow?.addEventListener('click', () => {
-        window.electronAPI?.minimizeWindow?.();
-    });
-
-    closeWindow?.addEventListener('click', () => {
-        window.electronAPI?.closeWindow?.();
-    });
+    minimizeWindow?.addEventListener('click', () => window.electronAPI?.minimizeWindow?.());
+    closeWindow?.addEventListener('click', () => window.electronAPI?.closeWindow?.());
 });
