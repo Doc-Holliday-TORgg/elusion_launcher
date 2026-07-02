@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Outer Rim Launcher</title>
+    <link rel="stylesheet" href="CSS.css">
+</head>
+<body>
+    <div class="launcher-container">
+        <header class="top-bar">
+            <div class="title-group">
+                <div class="window-controls">
+                    <button id="minimizeWindow" class="window-btn minimize" aria-label="Minimize">−</button>
+                    <button id="closeWindow" class="window-btn close" aria-label="Close">×</button>
+                </div>
+                <div class="user-info">
+                    <button id="loginBtn" class="login-btn" type="button">
+                        <span class="icon">👤</span>
+                        <span id="loginBtnText">Log into your account</span>
+                    </button>
+                    <span id="loginStatus" class="login-status">Not logged in</span>
+                </div>
+            </div>
+            <div class="controls">
+                <button id="optionsBtn" class="btn-glow" type="button">⚙ OPTIONS</button>
+                <select id="serverDropdown" class="server-dropdown">
+                    <option>Loading servers...</option>
+                </select>
+            </div>
+        </header>
+
+        <main class="panel-grid">
+            <div class="column">
+                <div class="panel neon-blue">
+                    <h3>Road Map of the Outer Rim</h3>
+                    <div id="roadmapContent">Loading roadmap from outerrim.gg...</div>
+                </div>
+                <div class="panel neon-blue">
+                    <h3>Events</h3>
+                    <div id="eventsContent">No events scheduled at this time.</div>
+                </div>
+                <div class="panel neon-blue">
+                    <h3>Server Status</h3>
+                    <div id="serverStatusContent">Fetching server status from outerrim.gg...</div>
+                </div>
+            </div>
+            <div class="column wide">
+                <div class="panel neon-purple">
+                    <h3>Patch Notes</h3>
+                    <div id="patchNotesText">Loading patch notes from outerrim.gg...</div>
+                </div>
+            </div>
+        </main>
+
+        <div id="loginModal" class="modal hidden">
+            <div class="modal-content neon-purple">
+                <h2>Sign in to download</h2>
+
+                <div class="setting-group">
+                    <label for="loginUsername">Username</label>
+                    <input id="loginUsername" class="login-input" type="text" placeholder="Enter username">
+                </div>
+                <div class="setting-group">
+                    <label for="loginPassword">Password</label>
+                    <input id="loginPassword" class="login-input" type="password" placeholder="Enter password">
+                </div>
+                <span id="loginError" class="login-error"></span>
+
+                <div class="login-actions">
+                    <button class="btn-primary" id="loginSubmitBtn" type="button">SIGN IN</button>
+                    <button class="btn-glow" id="loginCancelBtn" type="button">CANCEL</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="optionsModal" class="modal hidden">
+            <div class="modal-content neon-purple">
+                <h2>LAUNCHER OPTIONS</h2>
+
+                <div class="setting-group">
+                    <label for="frameRate">FRAME RATE LIMIT <span id="fpsValue" class="right">60 FPS</span></label>
+                    <input id="frameRate" type="range" min="30" max="144" value="60" class="slider">
+                </div>
+
+                <div class="setting-group">
+                    <label>DISPLAY MODE</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="display"> Windowed</label>
+                        <label><input type="radio" name="display" checked> Borderless</label>
+                        <label><input type="radio" name="display"> Full Screen</label>
+                    </div>
+                </div>
+
+                <button class="btn-primary" id="saveOptions" type="button">SAVE CHANGES</button>
+            </div>
+        </div>
+
+        <footer class="bottom-bar">
+            <div class="download-info">
+                <span id="downloadContent">Downloading: mtg_patch_014.tre</span>
+                <span id="downloadStatus">Ready to start download</span>
+                <span id="swgPathInfo" class="swg-path-info">SWG folder not selected.</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
+            </div>
+            <div class="footer-buttons">
+                <button id="selectSwgFolderBtn" class="btn-action" type="button">SELECT SWG FOLDER</button>
+                <button id="downloadActionBtn" class="btn-action" type="button">START DOWNLOAD</button>
+                <button id="launchActionBtn" class="btn-action" type="button" disabled>LAUNCH GAME</button>
+            </div>
+        </footer>
+    </div>
+    <script src="UI logic.js"></script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Outer Rim Launcher</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="launcher-container">
+        <!-- Top Navigation -->
+        <header class="top-bar">
+            <div class="user-info">
+                <span class="icon">👤</span> Logged in as Svall
+            </div>
+            <div class="controls">
+                <button id="optionsBtn" class="btn-glow">⚙ OPTIONS</button>
+                <select class="server-dropdown">
+                    <option>Live - The Outer Rim (Online)</option>
+                    <option>Live - Coruscant (Online)</option>
+                    <option>Event - Alderaan (Offline)</option>
+                    <option>Public Test (Online)</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Main Panels -->
+        <main class="panel-grid">
+            <div class="column">
+                <div class="panel neon-blue">
+                    <h3>Announcements</h3>
+                    <p>We are live! Soft launch occurred at midnight tonight. Keep checking back for updates and patch notes.</p>
+                </div>
+                <div class="panel neon-blue">
+                    <h3>Events</h3>
+                    <p>No events scheduled at this time.</p>
+                </div>
+            </div>
+            <div class="column wide">
+                <div class="panel neon-purple">
+                    <h3>Patch Notes</h3>
+                    <p>Added custom spawns to the World of the Dead - Dathomir...</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Options Modal (Hidden by default) -->
+        <div id="optionsModal" class="modal hidden">
+            <div class="modal-content neon-purple">
+                <h2>LAUNCHER OPTIONS</h2>
+                
+                <div class="setting-group">
+                    <label>FRAME RATE LIMIT <span class="right">60 FPS</span></label>
+                    <input type="range" min="30" max="144" value="60" class="slider">
+                </div>
+
+                <div class="setting-group">
+                    <label>DISPLAY MODE</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="display"> Windowed</label>
+                        <label><input type="radio" name="display" checked> Borderless</label>
+                        <label><input type="radio" name="display"> Full Screen</label>
+                    </div>
+                </div>
+
+                <button class="btn-primary" id="saveOptions">SAVE CHANGES</button>
+            </div>
+        </div>
+
+        <!-- Footer / Download Bar -->
+        <footer class="bottom-bar">
+            <div class="download-info">
+                <span>Downloading: mtg_patch_014.tre</span>
+                <span id="progressText">188.5 MB / 269.4 MB (70%)</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar" style="width: 70%;"></div>
+            </div>
+            <button class="btn-action">DOWNLOADING (70%)</button>
+        </footer>
+    </div>
+    <script src="renderer.js"></script>
+</body>
+</html>

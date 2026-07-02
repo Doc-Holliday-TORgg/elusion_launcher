@@ -1,0 +1,12 @@
+{
+  "name": "outrim-launcher",
+  "version": "1.0.0",
+  "description": "A stylized launcher for The Outer Rim",
+  "main": "Application Core.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "^31.0.0"
+  }
+}

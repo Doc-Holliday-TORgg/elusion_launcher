@@ -1,0 +1,20 @@
+{
+  "downloadUrl": "https://speed.hetzner.de/50MB.bin",
+  "downloadFileName": "mtg_patch_014.tre",
+  "patchNotesUrl": "https://outerrim.gg/portal/patch-notes",
+  "roadmapUrl": "https://outerrim.gg/portal/roadmap",
+  "eventsUrl": "https://outerrim.gg/portal/scheduled-events",
+  "portalStatusUrl": "https://outerrim.gg/portal/",
+  "servers": [
+    {
+      "name": "Live - The Outer Rim",
+      "address": "login.theouterrim.gg",
+      "statusUrl": "https://login.theouterrim.gg"
+    },
+    {
+      "name": "Public Test",
+      "address": "publictest.outerrim.gg",
+      "statusUrl": "https://publictest.outerrim.gg"
+    }
+  ]
+}

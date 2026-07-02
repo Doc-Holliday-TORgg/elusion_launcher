@@ -1,0 +1,15 @@
+# Dependencies (regenerate with `npm install`)
+node_modules/
+
+# Electron/Chromium runtime data
+user-data/
+
+# Build output
+dist/
+out/
+
+# Logs
+launch_stdout.txt
+launch_log.txt
+*.log
+npm-debug.log*
